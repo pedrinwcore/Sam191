@@ -708,13 +708,21 @@ router.post('/start', authMiddleware, async (req, res) => {
       });
     }
 
+    // Buscar o codigo_cliente (revenda) do usuário de streaming
+    // Para usuários de streaming, precisamos buscar o codigo_cliente que referencia a tabela revendas
+    const [streamingUserRows] = await db.execute(
+      'SELECT codigo_cliente FROM streamings WHERE codigo_cliente = ? LIMIT 1',
+      [userId]
+    );
+
+    // Se não encontrar em streamings, assumir que userId já é de revenda
+    const codigoRevenda = streamingUserRows.length > 0 ? streamingUserRows[0].codigo_cliente : userId;
+
     // Verificar se já há transmissão ativa
     const [activeTransmission] = await db.execute(
-      `SELECT codigo FROM transmissoes 
-       WHERE (codigo_stm = ? OR codigo_stm IN (
-         SELECT codigo FROM streamings WHERE codigo_cliente = ?
-       )) AND status = "ativa"`,
-      [userId, userId]
+      `SELECT codigo FROM transmissoes
+       WHERE codigo_stm = ? AND status = "ativa"`,
+      [codigoRevenda]
     );
 
     if (activeTransmission.length > 0) {
@@ -724,13 +732,13 @@ router.post('/start', authMiddleware, async (req, res) => {
       });
     }
 
-    // Inserir nova transmissão
+    // Inserir nova transmissão usando o codigo da revenda
     const [result] = await db.execute(
       `INSERT INTO transmissoes (
-        codigo_stm, titulo, descricao, codigo_playlist, status, data_inicio, 
+        codigo_stm, titulo, descricao, codigo_playlist, status, data_inicio,
         gravacao_ativa, loop_playlist, use_smil
       ) VALUES (?, ?, ?, ?, 'ativa', NOW(), ?, ?, ?)`,
-      [userId, titulo, descricao || '', playlist_id, enable_recording ? 1 : 0, loop_playlist ? 1 : 0, use_smil ? 1 : 0]
+      [codigoRevenda, titulo, descricao || '', playlist_id, enable_recording ? 1 : 0, loop_playlist ? 1 : 0, use_smil ? 1 : 0]
     );
 
     const transmissionId = result.insertId;
