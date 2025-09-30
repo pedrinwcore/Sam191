@@ -154,17 +154,25 @@ class YouTubeDownloader {
             // Verificar tamanho estimado
             const estimatedSizeMB = Math.ceil((videoInfo.filesize || 50 * 1024 * 1024) / (1024 * 1024));
             
-            // Buscar dados da pasta
-            const [folderRows] = await db.execute(
-                'SELECT identificacao, codigo_servidor, espaco, espaco_usado FROM streamings WHERE codigo = ? AND codigo_cliente = ?',
-                [destinationFolder, userId]
+            // Buscar dados da pasta (verificar ambas as tabelas)
+            let folderRows = await db.execute(
+                'SELECT id as codigo, nome_sanitizado as identificacao, servidor_id as codigo_servidor, espaco, espaco_usado FROM folders WHERE id = ?',
+                [destinationFolder]
             );
 
-            if (folderRows.length === 0) {
+            // Se não encontrar em folders, buscar em streamings
+            if (folderRows[0].length === 0) {
+                folderRows = await db.execute(
+                    'SELECT codigo, identificacao, codigo_servidor, espaco, espaco_usado FROM streamings WHERE codigo = ? AND codigo_cliente = ?',
+                    [destinationFolder, userId]
+                );
+            }
+
+            if (folderRows[0].length === 0) {
                 throw new Error('Pasta de destino não encontrada');
             }
 
-            const folderData = folderRows[0];
+            const folderData = folderRows[0][0];
             const folderName = folderData.identificacao;
             const serverId = folderData.codigo_servidor || 1;
             const availableSpace = folderData.espaco - folderData.espaco_usado;
