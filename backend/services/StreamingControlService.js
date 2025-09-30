@@ -12,7 +12,7 @@ class StreamingControlService {
     async getStreamingData(login) {
         try {
             const [streamingRows] = await db.execute(
-                'SELECT * FROM streamings WHERE login = ?',
+                'SELECT * FROM streamings WHERE usuario = ?',
                 [login]
             );
 
@@ -416,7 +416,7 @@ class StreamingControlService {
             }
 
             // Verificar status normal via JMX
-            const status = await this.checkStreamingStatus(server.ip, server.senha, streaming.login);
+            const status = await this.checkStreamingStatus(server.ip, server.senha, streaming.usuario);
 
             if (status.status === 'loaded') {
                 // TODO: Verificar se há transmissão ao vivo (incoming streams)

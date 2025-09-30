@@ -358,9 +358,11 @@ router.post('/convert', authMiddleware, async (req, res) => {
       });
     }
 
-    // Comando FFmpeg para conversão
+    // Comando FFmpeg para conversão (escape de aspas para bash)
     const [width, height] = targetResolution.split('x');
-    const ffmpegCommand = `ffmpeg -i "${inputPath}" -c:v libx264 -preset medium -crf 23 -b:v ${targetBitrate}k -maxrate ${targetBitrate}k -bufsize ${targetBitrate * 2}k -vf scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2 -c:a aac -b:a 128k -movflags +faststart -f mp4 "${outputPath}" -y 2>&1 && echo "CONVERSION_SUCCESS" || echo "CONVERSION_ERROR"`;
+    const escapedInputPath = inputPath.replace(/"/g, '\\"');
+    const escapedOutputPath = outputPath.replace(/"/g, '\\"');
+    const ffmpegCommand = `bash -c 'ffmpeg -i "${escapedInputPath}" -c:v libx264 -preset medium -crf 23 -b:v ${targetBitrate}k -maxrate ${targetBitrate}k -bufsize ${targetBitrate * 2}k -vf "scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:ow-iw/2:oh-ih/2" -c:a aac -b:a 128k -movflags +faststart -f mp4 "${escapedOutputPath}" -y 2>&1 && echo CONVERSION_SUCCESS || echo CONVERSION_ERROR'`;
 
     console.log(`🔄 Iniciando conversão: ${video.nome} -> ${qualityLabel}`);
     console.log(`📁 Caminho de entrada: ${inputPath}`);

@@ -60,7 +60,6 @@ class YouTubeDownloader {
             const ytDlpProcess = spawn('yt-dlp', [
                 '--print-json',
                 '--no-download',
-                '--format', 'best[ext=mp4]/best',
                 '--no-playlist',
                 url
             ]);
@@ -203,14 +202,11 @@ class YouTubeDownloader {
 
             // Iniciar download com yt-dlp
             const ytDlpArgs = [
-                '--format', `${quality}[ext=mp4]/best[ext=mp4]/best`,
+                '--format', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                '--merge-output-format', 'mp4',
                 '--output', tempFilePath,
                 '--no-playlist',
-                '--extract-flat', 'false',
-                '--write-info-json',
-                '--write-thumbnail',
                 '--embed-metadata',
-                '--add-metadata',
                 '--no-warnings',
                 url
             ];

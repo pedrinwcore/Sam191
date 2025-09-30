@@ -96,7 +96,8 @@ class SSHManager {
                         if (code === 0) {
                             resolve({ success: true, stdout, stderr, code });
                         } else {
-                            reject(new Error(`Comando falhou com código ${code}: ${stderr}`));
+                            const errorMessage = stderr.trim() || stdout.trim() || 'Comando falhou';
+                            reject(new Error(`Comando falhou com código ${code}: ${errorMessage}`));
                         }
                     });
 
